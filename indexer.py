@@ -19,10 +19,10 @@ total_pages = 0
 # Initialize the Porter stemmer
 portStem = nltk.stem.PorterStemmer()
 
-# Define the number of partial indexes
-num_partial_indexes = 3
+# number of pages to go through before creating new partial index
+create_new_partial_index_every_THIS_pages = 3000
 
-# Counter to keep track of partial index creation
+# Counter to keep track of the number of partial indicies created
 partial_index_count = 0
 
 # Loop through each subdirectory
@@ -69,7 +69,7 @@ for sub_directories in dev_directories:
         print("Indexed", url)
 
         # Check if it's time to offload the index to a partial index on disk
-        if total_pages % (num_partial_indexes * 1000) == 0:
+        if total_pages % (create_new_partial_index_every_THIS_pages) == 0:
             partial_index_filename = f"partial_index_{partial_index_count}.pickle"
             with open(partial_index_filename, "wb") as f:
                 partial_index = {token: index[token] for token in index}
@@ -82,10 +82,11 @@ partial_index_filename = f"partial_index_{partial_index_count}.pickle"
 with open(partial_index_filename, "wb") as f:
     partial_index = {token: index[token] for token in index}
     pickle.dump(partial_index, f)
+    partial_index_count += 1
 
 # Merge the partial indexes into a single index
 merged_index = {}
-for partial_index_num in range(num_partial_indexes):
+for partial_index_num in range(partial_index_count):
     partial_index_filename = f"partial_index_{partial_index_num}.pickle"
     with open(partial_index_filename, "rb") as f:
         partial_index = pickle.load(f)
@@ -100,11 +101,30 @@ for token in merged_index:
     docs_containing_token = len(merged_index[token])
     idf = math.log(total_pages / docs_containing_token)
 
-    for url in merged_index[token]:
+    for url in merged_index[token]:    
         tf = merged_index[token][url] / word_count[url]
         merged_index[token][url] = tf * idf
 
+# rewrite term counts to tf_idf in partial indicies
+num_partial_indexes = 19
+for partial_index_num in range(num_partial_indexes):
+    # open partial index with term counts
+    partial_index_filename = f"partial_index_{partial_index_num}.pickle"
+    with open(partial_index_filename, "rb") as f:
+        partial_index = pickle.load(f)
 
+    # update term counts to tf_idf
+    for token in partial_index:
+        for url in partial_index[token]:
+            if token in merged_index and url in merged_index[token]:
+                partial_index[token][url] = merged_index[token][url]
+            else:
+                partial_index[token][url] = 0
+
+    # overwrite partial index with tf_idf
+    with open(partial_index_filename, "wb") as f:
+        pickle.dump(partial_index, f)
+    
 # Save the merged index to a file using pickle
 with open("index.pickle", "wb") as f:
     pickle.dump(merged_index, f)
