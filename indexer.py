@@ -19,6 +19,12 @@ total_pages = 0
 # Initialize the Porter stemmer
 portStem = nltk.stem.PorterStemmer()
 
+# Define the number of partial indexes
+num_partial_indexes = 3
+
+# Counter to keep track of partial index creation
+partial_index_count = 0
+
 # Loop through each subdirectory
 for sub_directories in dev_directories:
     print("Indexing pages in", sub_directories)
@@ -48,7 +54,8 @@ for sub_directories in dev_directories:
             # Stem the token using the Porter stemmer
             stemmed_token = portStem.stem(token)
 
-            # Update the index for the current token and URL
+            # Update the index for the current token and URL\
+            # d in d
             if stemmed_token in index:
                 if url in index[stemmed_token]:
                     index[stemmed_token][url] += 1
@@ -61,17 +68,49 @@ for sub_directories in dev_directories:
         total_pages += 1
         print("Indexed", url)
 
-# Calculate the inverse document frequency for each token
-for token in index:
-    idf = math.log(total_pages / len(index[token]))
-    for url in index[token]:
-        index[token][url] = index[token][url] / word_count[url] * idf
+        # Check if it's time to offload the index to a partial index on disk
+        if total_pages % (num_partial_indexes * 1000) == 0:
+            partial_index_filename = f"partial_index_{partial_index_count}.pickle"
+            with open(partial_index_filename, "wb") as f:
+                partial_index = {token: index[token] for token in index}
+                pickle.dump(partial_index, f)
+            partial_index_count += 1
+            index = {}  # Reset the index in memory
 
-# Save the index to a file using pickle
+# Save the remaining index to a partial index on disk
+partial_index_filename = f"partial_index_{partial_index_count}.pickle"
+with open(partial_index_filename, "wb") as f:
+    partial_index = {token: index[token] for token in index}
+    pickle.dump(partial_index, f)
+
+# Merge the partial indexes into a single index
+merged_index = {}
+for partial_index_num in range(num_partial_indexes):
+    partial_index_filename = f"partial_index_{partial_index_num}.pickle"
+    with open(partial_index_filename, "rb") as f:
+        partial_index = pickle.load(f)
+        for token in partial_index:
+            if token in merged_index:
+                merged_index[token].update(partial_index[token])
+            else:
+                merged_index[token] = partial_index[token]
+
+# Calculate the inverse document frequency for each token in the merged index
+for token in merged_index:
+    docs_containing_token = len(merged_index[token])
+    idf = math.log(total_pages / docs_containing_token)
+
+    for url in merged_index[token]:
+        tf = merged_index[token][url] / word_count[url]
+        merged_index[token][url] = tf * idf
+
+
+# Save the merged index to a file using pickle
 with open("index.pickle", "wb") as f:
-    pickle.dump(index, f)
+    pickle.dump(merged_index, f)
 
 # Print some statistics about the index
 print("Number of pages indexed:", total_pages)
-print("Number of unique tokens:", len(index))
+print("Number of unique tokens:", len(merged_index))
 print("Size of index on disk:", os.path.getsize("index.pickle") // 1000, "KB")
+
