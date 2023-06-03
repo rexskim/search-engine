@@ -1,0 +1,44 @@
+Rex Kim 22229163, Jasmine Mendoza 16088501, 
+Minh Nguyen 38731850, Colleen Hoang 18441590
+Professor Krone-Martins
+CS 121 — Spring 2023
+
+
+Assignment 3 Milestone 3 Report
+10 Queries that performed well:
+
+
+1. informatics
+	2. computer science
+	3. statistics
+	4. business
+	5. apple
+	6. python library
+	7. coding environment
+	8. midterm exam
+	9. milestone
+	10. Teaching assistants
+	
+10 Queries that did poorly, but were optimized:
+
+
+1. computer sceince
+	Enhanced search quality by accounting for smaller spelling errors
+2. computer hdfkaljhkdashsklne
+	Improved search quality by finding tf-idf score for each individual token over tokens that intersected
+3. random
+	Created multiple partial indexes, cutting runtime
+4. undergraduate
+	Enhanced runtime to account for tokens that contain other tokens
+5. human-computer interaction
+	Improved search quality by accounting for hyphenated tokens
+6.Master of mechanical engineering
+	Improved search quality so indexer can find tokens that are more important, such as those in titles or ones that are in the URL
+7. infomatics
+	Enhanced search quality by accounting for smaller spelling errors
+8. program
+	Improved search quality by finding tf-idf score for token program that intersects with other tokens (i.e. programmer)
+9. ICS Faculty
+	Enhanced search speed when tokens are duplicates
+10. donald bren
+	Improved search quality by finding tf-idf score for each individual token over tokens that intersected
