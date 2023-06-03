@@ -5,6 +5,7 @@ import nltk
 import pickle
 import math
 from bs4 import BeautifulSoup
+import concurrent.futures
 import time
 
 
@@ -16,13 +17,14 @@ query_tokens = nltk.word_tokenize(query)
 stemmed_query = [portStem.stem(token) for token in query_tokens]
 
 # Load partial indexes
-num_partial_indexes = 3
+num_partial_indexes = 5
 partial_indexes = []
 for partial_index_num in range(num_partial_indexes):
     partial_index_filename = f"partial_index_{partial_index_num}.pickle"
     with open(partial_index_filename, "rb") as f:
         partial_index = pickle.load(f)
         partial_indexes.append(partial_index)
+
 
 # Perform search in partial indexes
 url_scores = {}
@@ -34,6 +36,7 @@ for token in stemmed_query:
                     url_scores[url] += token_frequency
                 else:
                     url_scores[url] = token_frequency
+
 
 # Sort and display top results
 ranked_urls = sorted(url_scores.items(), key=lambda x: x[1], reverse=True)

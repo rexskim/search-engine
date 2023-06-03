@@ -20,7 +20,7 @@ total_pages = 0
 portStem = nltk.stem.PorterStemmer()
 
 # number of pages to go through before creating new partial index
-create_new_partial_index_every_THIS_pages = 3000
+create_new_partial_index_every_THIS_pages = 10000
 
 # Counter to keep track of the number of partial indicies created
 partial_index_count = 0
@@ -106,7 +106,7 @@ for token in merged_index:
         merged_index[token][url] = tf * idf
 
 # rewrite term counts to tf_idf in partial indicies
-num_partial_indexes = 19
+num_partial_indexes = 6
 for partial_index_num in range(num_partial_indexes):
     # open partial index with term counts
     partial_index_filename = f"partial_index_{partial_index_num}.pickle"
